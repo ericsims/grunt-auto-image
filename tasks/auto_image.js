@@ -8,6 +8,9 @@
 
 'use strict';
 
+var fs = require('fs');
+var path = require('path');
+
 module.exports = function(grunt) {
 
   // Please see the Grunt documentation for more information regarding task
@@ -24,7 +27,7 @@ module.exports = function(grunt) {
     this.files.forEach(function(f) {
       
       
-      /* This is the old Template example
+      // This is the old Template example
       // Concat specified files.
       var src = f.src.filter(function(filepath) {
         // Warn on and remove invalid source files (if nonull was set).
@@ -37,17 +40,32 @@ module.exports = function(grunt) {
       }).map(function(filepath) {
         // Read file source.
         return grunt.file.read(filepath);
-      }).join(grunt.util.normalizelf(options.separator));
-      */
+      });
       
       // Handle options.
       src += options.punctuation;
       
-      getKeyedLine(src, "<!--", "-->").forEach(function (val) {
-        console.log(val.files);
-        console.log(val.height);
+      getKeyedLine(src, '<!--', '-->', function (line, index) {
+        console.log(line.indent);
+        var dir = path.resolve('client/' + line.directory.toString());
+        var images = [], imageTags = '\n';
+        grunt.file.recurse(dir, function(abspath, rootdir, subdir, filename) {
+          var img = {};
+          img.path = path.relative('client', abspath);
+          img.dir = path.relative('client', dir);
+          img.filename = filename;
+          if(!subdir && isImage(abspath)) {
+            images.push(img);
+          }
+        });
+        images.forEach(function (val, index) {
+          imageTags += newLine('<a href="' + val.path + '" class="highslide" onclick="return hs.expand(this)">', ' ', line.indent);
+          imageTags += newLine('<img src="' + val.dir + '\thumbnails\\' + removeExt(val.filename) + '_thumb.png" title="Click to enlarge" height="' + line.height.toString() + '" /></a>', ' ', line.indent);
+        });
+        src = src.insertAt(imageTags, index);
       });
 
+      
       // Write the destination file.
       grunt.file.write(f.dest, src);
 
@@ -56,27 +74,63 @@ module.exports = function(grunt) {
     });
   });
   
+  var newLine = function(str, pref, multi) {
+    if (multi && pref) {
+      var prefix = '';
+      for(var i = 0; i < multi; i++) {
+        prefix += pref;
+      }
+      return prefix + str + '\n';
+    }
+    else {
+      return str + '\n';
+    }
+  };
+  
   // return a segment of a file as a JSON object between startKey and endKey
-  function getKeyedLine(val, startKey, endKey) {
-    var lines = [], i = -1;
+  var getKeyedLine = function(val, startKey, endKey, handleData) {
+    var i = -1;
     while (true) {
         var start = val.indexOf(startKey, i + 1);
-        if(start == -1) break;
+        if(start === -1) { break; }
         var end = val.indexOf(endKey, start + 1);
-        if(end == -1) break;
+        if(end === -1) { break; }
+        var indent = 0;
+        while(start - indent > 0) {
+          if(val.charAt(start) === '\n') {
+            break;
+          } else {
+            indent++;
+          }
+        }
         i = end;
         var line = val.substring(start + startKey.length, end - 1).trim();
         try {
           var obj = JSON.parse(line);
           if (obj && typeof obj === "object" && obj !== null) {
-            lines.push(obj);
-          } else throw SyntaxError;
+            obj.indent = indent;
+            handleData(obj, end + endKey.length);
+          } else {
+            throw SyntaxError;
+          }
         } catch (e) {
-          grunt.log.warn('invalid JSON: "' + line + '"');
+          grunt.log.warn(e);
         }
-
     }
-    return lines;
-  }
+  };
+  
+  String.prototype.insertAt = function(string, index) { 
+    return this.substr(0, index) + string + this.substr(index);
+  };
+  
+  var isImage = function(path) {
+    var splitz = path.split('.');
+    var ext = splitz[splitz.length-1].toLowerCase();
+    return (ext === 'jpg' || ext === 'png');
+  };
+  
+  var removeExt = function(str) {
+    return str.substring(0, str.lastIndexOf('.'));
+  };
   
 };

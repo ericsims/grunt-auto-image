@@ -34,7 +34,7 @@ module.exports = function(grunt) {
         options: {
         },
         files: {
-          'tmp/default_options': ['test/fixtures/testing', 'test/fixtures/123', 'test/fixtures/456']
+          'tmp/default_options': 'test/fixtures/456'
         }
       },
       custom_options: {
@@ -68,6 +68,6 @@ module.exports = function(grunt) {
   grunt.registerTask('test', ['clean', 'auto_image', 'nodeunit']);
 
   // By default, lint and run all tests.
-  grunt.registerTask('default', ['jshint', 'test']);
+  grunt.registerTask('default', ['jshint', 'clean', 'auto_image']);
 
 };
