@@ -38,6 +38,11 @@ module.exports = function(grunt) {
 
       // Handle options.
       src += options.punctuation;
+      
+      getKeyedLine(src, "<!--", "-->").forEach(function (val) {
+        console.log(val.files);
+        console.log(val.height);
+      });
 
       // Write the destination file.
       grunt.file.write(f.dest, src);
@@ -46,5 +51,35 @@ module.exports = function(grunt) {
       grunt.log.writeln('File "' + f.dest + '" created.');
     });
   });
+  
+  function getKeyedLine(val, startKey, endKey) {
+    var lines = [], i = -1;
+    while (true) {
+        var start = val.indexOf(startKey, i + 1);
+        if(start == -1) break;
+        var end = val.indexOf(endKey, start + 1);
+        if(end == -1) break;
+        i = end;
+        var line = val.substring(start + startKey.length, end - 1).trim();
+        try {
+          var obj = JSON.parse(line);
+          if (obj && typeof obj === "object" && obj !== null) {
+            lines.push(obj);
+          } else throw SyntaxError;
+        } catch (e) {
+          grunt.log.warn('invalid JSON: "' + line + '"');
+        }
+
+    }
+    return lines;
+  }
+  
+  function getAllIndexes(val, key) {
+    var indexes = [], i = -1;
+    while ((i = val.indexOf(key, i+1)) != -1) {
+        indexes.push(i);
+    }
+    return indexes;
+  }
 
 };
