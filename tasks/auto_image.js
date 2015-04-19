@@ -22,6 +22,9 @@ module.exports = function(grunt) {
 
     // Iterate over all specified file groups.
     this.files.forEach(function(f) {
+      
+      
+      /* This is the old Template example
       // Concat specified files.
       var src = f.src.filter(function(filepath) {
         // Warn on and remove invalid source files (if nonull was set).
@@ -35,7 +38,8 @@ module.exports = function(grunt) {
         // Read file source.
         return grunt.file.read(filepath);
       }).join(grunt.util.normalizelf(options.separator));
-
+      */
+      
       // Handle options.
       src += options.punctuation;
       
@@ -52,6 +56,7 @@ module.exports = function(grunt) {
     });
   });
   
+  // return a segment of a file as a JSON object between startKey and endKey
   function getKeyedLine(val, startKey, endKey) {
     var lines = [], i = -1;
     while (true) {
@@ -74,12 +79,4 @@ module.exports = function(grunt) {
     return lines;
   }
   
-  function getAllIndexes(val, key) {
-    var indexes = [], i = -1;
-    while ((i = val.indexOf(key, i+1)) != -1) {
-        indexes.push(i);
-    }
-    return indexes;
-  }
-
 };
